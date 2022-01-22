@@ -1,0 +1,14 @@
+# Files
+*.dll
+*.exe
+*.lib
+*.obj
+*.vcxproj.filters
+*.vcxproj.user
+
+# Directories
+.vs
+Debug
+Release
+x64
+x86
