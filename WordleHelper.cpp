@@ -6,20 +6,17 @@
 using std::cout;
 using std::endl;
 
-#define VERBOSE true
-
 struct Wordle
 {
-	Wordle() { memset(letter, 0, 5); }
-	Wordle(char const* p) { memcpy(letter, p, 5); }
+	Wordle() { memset(letter, 0, 5); letter[5] = '\0'; }
+	Wordle(char const* p) { memcpy(letter, p, 5); letter[5] = '\0'; }
 
 	int Score(char const*) const;
 
-	friend std::ostream& operator<<(std::ostream& out, Wordle const& w) { return out << w.letter[0] << w.letter[1] << w.letter[2] << w.letter[3] << w.letter[4]; }
 	inline operator char const* () const { return letter; }
 
 private:
-	char letter[5];
+	char letter[6];
 };
 
 int Wordle::Score(char const* guess) const
@@ -49,11 +46,11 @@ int Wordle::Score(char const* guess) const
 
 double rnd(double prop = 0)
 {
-	prop = (prop + rand()) / (RAND_MAX + 1);
-	prop = (prop + rand()) / (RAND_MAX + 1);
-	prop = (prop + rand()) / (RAND_MAX + 1);
-	prop = (prop + rand()) / (RAND_MAX + 1);
-	return (prop + rand()) / (RAND_MAX + 1);
+	prop = (prop + rand()) / (1.0 + RAND_MAX);
+	prop = (prop + rand()) / (1.0 + RAND_MAX);
+	prop = (prop + rand()) / (1.0 + RAND_MAX);
+	prop = (prop + rand()) / (1.0 + RAND_MAX);
+	return (prop + rand()) / (1.0 + RAND_MAX);
 }
 
 Wordle Contemplate(std::vector<Wordle> const& dictionary, std::vector<Wordle> const& candidates)
@@ -77,13 +74,11 @@ Wordle Contemplate(std::vector<Wordle> const& dictionary, std::vector<Wordle> co
 		entropy = entropy * 2 - count[242];
 
 		if (best < entropy) continue;
-		if (best == entropy && ++keep * rnd() > 1) continue;
+		if (best == entropy && ++keep * rnd() > 1) continue;  // Randomize between equally good scores
 		if (best > entropy) keep = 1;
 
 		best = entropy;
 		result = guess;
-
-		// if (VERBOSE) cout << guess << " ----> " << best << endl;
 	}
 
 	return result;
@@ -100,7 +95,6 @@ int Response(Wordle const& guess)
 {
 	std::string input;
 	int score[5] = { 0,0,0,0,0 };
-	int result;
 
 redo:
 	cout << guess << " ----> ";
@@ -157,40 +151,32 @@ int main()
 	input.close();
 
 	std::vector<Wordle> candidates = dictionary;
-	Wordle guess;
+	Wordle guess = "SERAI";  // Precomputed initial guess
 	int score;
 
-	cout << "Optimizing initial guess..." << endl;
-
-	while (candidates.size() > 1)
+	if (!*guess)
 	{
+		cout << "Optimizing initial guess..." << endl;
 		guess = Contemplate(dictionary, candidates);
+	}
+
+	cout << endl << "Playing: Enter the word in Wordle and type the response back as follows: 'B'=black, 'G'=green, 'Y'=yellow." << endl << endl;
+
+	do
+	{
 		score = Response(guess);
 		candidates = Eliminate(candidates, guess, score);
+		guess = Contemplate(dictionary, candidates);
+	} while (candidates.size() > 1);
 
-		if (VERBOSE && candidates.size() < 1000)
-		{
-			for (auto const& candidate : candidates) cout << candidate << ", ";
-			cout << endl;
-		}
-	}
-
-	switch (candidates.size())
+	if (candidates.size())
 	{
-	case 0:
-		cout << "No idea!" << endl;
-		break;
-
-	case 1:
 		cout << "Answer: " << candidates[0] << endl;
-		break;
-
-	default:
-		cout << "Candidate words: " << candidates.size() << endl;
-		for (auto const& item : candidates) cout << item << ", "; cout << endl;
 	}
-
-	return EXIT_SUCCESS;
+	else
+	{
+		cout << "No idea!" << endl;
+	}
 }
 
 //**********************************************************************************************************************
