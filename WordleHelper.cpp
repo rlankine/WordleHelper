@@ -56,7 +56,7 @@ int Wordle::Score(char const *guess) const
 
 		for(int j = 0; j < 5; ++j)
 		{
-			if(letter[j] == guess[i])
+			if(letter[j] == guess[i] && score[j] == 0)
 			{
 				score[i] = 1; // Yellow!
 				break;
@@ -235,19 +235,10 @@ void F()
 {
 	std::vector<Wordle> dictionary = Load("Dictionary.dat");
 
-	Wordle test("LXOYZ");
-	Wordle goal("GLORY");
+	Wordle test("CLOOT");
+	Wordle goal("CHORD");
 
 	cout << goal.Score(test) << endl;
-
-	for(auto const &word : dictionary)
-	{
-		if(word[0] != 'L' && word[0] == 'L' && word[0] == 'L') continue;
-		if(word[1] != 'L' && word[1] == 'L' && word[1] == 'L') continue;
-		if(word[2] != 'O') continue;
-		if(word[3] != 'L' && word[3] == 'L' && word[3] == 'L') continue;
-		if(word[4] != 'L' && word[4] == 'L' && word[4] == 'L') continue;
-	}
 }
 
 
