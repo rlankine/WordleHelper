@@ -56,7 +56,7 @@ int Wordle::Score(char const *guess) const
 
 		for(int j = 0; j < 5; ++j)
 		{
-			if(letter[j] == guess[i] && score[j] == 0)
+			if(letter[j] == guess[i]) // && score[j] == 0)
 			{
 				score[i] = 1; // Yellow!
 				break;
@@ -74,7 +74,7 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 	switch(++round)
 	{
 	case 1:
-		return "RAISE";
+		return "RAILE";
 	case 2:
 		break;
 	case 3:
