@@ -132,7 +132,7 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 			max_correct = count[242];
 			max_classes = classes;
 
-			if(max_correct) cout << guess << " <---- Member of candidate set." << endl;
+			if(max_correct) cout << guess << " <---- In candidate set." << endl;
 
 			keep = 1;
 			continue;
@@ -143,7 +143,7 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 		if(count[242] < max_correct) continue;
 		if(count[242] > max_correct)
 		{
-			cout << guess << " <---- Member of candidate set." << endl;
+			cout << guess << " <---- In candidate set." << endl;
 
 			result = guess;
 			max_correct = count[242];
@@ -157,8 +157,8 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 		if(classes < max_classes) continue;
 		if(classes > max_classes)
 		{
-			cout << guess << " <---- Number of candidate sets:" << classes << endl;
-			if(max_correct) cout << guess << " <---- Member of candidate set." << endl;
+			cout << guess << " <---- Number of candidate sets: " << classes << endl;
+			if(max_correct) cout << guess << " <---- In candidate set." << endl;
 
 			result = guess;
 			max_classes = classes;
