@@ -10,21 +10,24 @@ struct Wordle
 {
 	Wordle()
 	{
-		memset(letter, 0, 5);
-		letter[5] = '\0';
+		memset(hidden, 0, 5);
+		hidden[5] = '\0';
 	}
 	Wordle(char const *p)
 	{
-		memcpy(letter, p, 5);
-		letter[5] = '\0';
+		memcpy(hidden, p, 5);
+		hidden[5] = '\0';
 	}
+
+	bool Excludes(char c) { return hidden[0] != c && hidden[1] != c && hidden[2] != c && hidden[3] != c && hidden[4] != c; }
+	bool Includes(char c) { return hidden[0] == c || hidden[1] == c || hidden[2] == c || hidden[3] == c || hidden[4] == c; }
 
 	int Score(char const *) const;
 
-	inline operator char const *() const { return letter; }
+	inline operator char const *() const { return hidden; }
 
 private:
-	char letter[6];
+	char hidden[6];
 };
 
 static size_t rand(size_t n)
@@ -45,20 +48,29 @@ double rnd() noexcept
 int Wordle::Score(char const *guess) const
 {
 	int score[5] = { 0, 0, 0, 0, 0 };
+	int used[5] = { 0, 0, 0, 0, 0 };
 
 	for(int i = 0; i < 5; ++i)
 	{
-		if(letter[i] == guess[i])
+		if(guess[i] == hidden[i])
 		{
 			score[i] = 2; // Green!
-			continue;
+			used[i] = 1;  // Do not re-score
 		}
+	}
+
+	for(int i = 0; i < 5; ++i)
+	{
+		if(score[i]) continue;
 
 		for(int j = 0; j < 5; ++j)
 		{
-			if(letter[j] == guess[i]) // && score[j] == 0)
+			if(used[j]) continue;
+
+			if(guess[i] == hidden[j])
 			{
 				score[i] = 1; // Yellow!
+				used[j] = 1;  // Do not re-score
 				break;
 			}
 		}
@@ -74,7 +86,7 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 	switch(++round)
 	{
 	case 1:
-		return "RAILE";
+		return "RAISE";
 	case 2:
 		break;
 	case 3:
@@ -87,9 +99,10 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 		break;
 	}
 
-#if 1
 	Wordle result;
-	double best = 0;
+	int min_maximum = INT_MAX;
+	int max_correct = 0;
+	int max_classes = 0;
 	int keep = 0;
 
 	for(auto const &guess : dictionary)
@@ -107,49 +120,57 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 				maximum = count[score];
 		}
 
-		double current = double(classes) / maximum;
-		// int current = 488 * maximum - 2 * classes - count[242];
+		// Pick the guess whose largest candidate set is smallest among all guesses
 
-		if(best > current)
-			continue;
-		if(best == current && ++keep * rnd() > 1)
-			continue; // Randomize between equally good scores
-		if(best < current)
+		if(maximum > min_maximum) continue;
+		if(maximum < min_maximum)
+		{
+			cout << guess << " <---- Largest candidate set: " << maximum << endl;
+
+			result = guess;
+			min_maximum = maximum;
+			max_correct = count[242];
+			max_classes = classes;
+
+			if(max_correct) cout << guess << " <---- Member of candidate set." << endl;
+
 			keep = 1;
-
-		best = current;
-		result = guess;
-	}
-#else
-	Wordle result;
-	int best = INT_MAX;
-	int keep = 0;
-
-	for(auto const &guess : dictionary)
-	{
-		int count[243];
-		int classes = 0;
-		int current = 0;
-
-		for(int i = 0; i < 243; ++i)
-			count[i] = 0;
-		for(auto const &candidate : candidates)
-			if(++count[candidate.Score(guess)] == 1)
-				++classes;
-		for(int i = 0; i < 243; ++i)
-			current = count[i] * count[i];
-
-		if(best < current)
 			continue;
-		if(best == current && ++keep * rnd() > 1)
-			continue; // Randomize between equally good scores
-		if(best > current)
-			keep = 1;
+		}
 
-		best = current;
-		result = guess;
+		// Next, pick the guess that is a member of the candidate set
+
+		if(count[242] < max_correct) continue;
+		if(count[242] > max_correct)
+		{
+			cout << guess << " <---- Member of candidate set." << endl;
+
+			result = guess;
+			max_correct = count[242];
+			max_classes = classes;
+			keep = 1;
+			continue;
+		}
+
+		// Finally, pick the guess that produces greater multitude of candidate sets
+
+		if(classes < max_classes) continue;
+		if(classes > max_classes)
+		{
+			cout << guess << " <---- Number of candidate sets:" << classes << endl;
+			if(max_correct) cout << guess << " <---- Member of candidate set." << endl;
+
+			result = guess;
+			max_classes = classes;
+			keep = 1;
+			continue;
+		}
+
+		// If still here, randomize...
+
+		if(++keep * rnd() < 1) result = guess;
 	}
-#endif
+
 	return result;
 }
 
@@ -249,8 +270,7 @@ int main()
 	std::vector<Wordle> dictionary = Load("Dictionary.dat");
 	std::vector<Wordle> candidates = Load("Candidates.dat");
 
-	cout << endl
-		 << "Playing: Enter the word in Wordle and type the response back as follows: 'B'=black, 'G'=green, 'Y'=yellow." << endl;
+	cout << endl << "Playing: Enter the word in Wordle and type the response back as follows: 'B'=black, 'G'=green, 'Y'=yellow." << endl;
 
 	Wordle guess;
 	int score;
