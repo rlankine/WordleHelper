@@ -6,6 +6,12 @@
 using std::cout;
 using std::endl;
 
+// #define ABSURDLE_MODE
+#define VERBOSE
+// #define WIN_OR_BUST
+
+//**********************************************************************************************************************
+
 struct Wordle
 {
 	Wordle()
@@ -18,9 +24,6 @@ struct Wordle
 		memcpy(hidden, p, 5);
 		hidden[5] = '\0';
 	}
-
-	bool Excludes(char c) { return hidden[0] != c && hidden[1] != c && hidden[2] != c && hidden[3] != c && hidden[4] != c; }
-	bool Includes(char c) { return hidden[0] == c || hidden[1] == c || hidden[2] == c || hidden[3] == c || hidden[4] == c; }
 
 	int Score(char const *) const;
 
@@ -48,14 +51,14 @@ double rnd() noexcept
 int Wordle::Score(char const *guess) const
 {
 	int score[5] = { 0, 0, 0, 0, 0 };
-	int used[5] = { 0, 0, 0, 0, 0 };
+	int taken[5] = { 0, 0, 0, 0, 0 };
 
 	for(int i = 0; i < 5; ++i)
 	{
 		if(guess[i] == hidden[i])
 		{
 			score[i] = 2; // Green!
-			used[i] = 1;  // Do not re-score
+			taken[i] = 1;
 		}
 	}
 
@@ -65,12 +68,12 @@ int Wordle::Score(char const *guess) const
 
 		for(int j = 0; j < 5; ++j)
 		{
-			if(used[j]) continue;
+			if(taken[j]) continue;
 
 			if(guess[i] == hidden[j])
 			{
 				score[i] = 1; // Yellow!
-				used[j] = 1;  // Do not re-score
+				taken[j] = 1;
 				break;
 			}
 		}
@@ -78,7 +81,6 @@ int Wordle::Score(char const *guess) const
 
 	return score[0] + 3 * (score[1] + 3 * (score[2] + 3 * (score[3] + 3 * score[4])));
 }
-
 Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> const &candidates)
 {
 	static int round = 0;
@@ -86,7 +88,15 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 	switch(++round)
 	{
 	case 1:
+#if defined(WIN_OR_BUST)
+		return "LATEN";
+#else
+#if defined(ABSURDLE_MODE)
 		return "RAISE";
+#else
+		return "TRACE";
+#endif
+#endif
 	case 2:
 		break;
 	case 3:
@@ -101,8 +111,9 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 
 	Wordle result;
 	int min_maximum = INT_MAX;
-	int max_correct = 0;
 	int max_classes = 0;
+	int max_correct = 0;
+	int max_uniques = 0;
 	int keep = 0;
 
 	for(auto const &guess : dictionary)
@@ -120,56 +131,134 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 				maximum = count[score];
 		}
 
-		// Pick the guess whose largest candidate set is smallest among all guesses
+#if defined(WIN_OR_BUST)
+
+		// Impatient mode: Make as many options for the next guess as possible
+
+		int uniques = 0;
+		for(int i = 0; i < 243; ++i) if(count[i] == 1) ++uniques;
+
+		if(uniques < max_uniques) continue;
+		if(uniques > max_uniques)
+		{
+#if defined(VERBOSE)
+			cout << guess << " <---- Number of unique candidates: " << classes << endl;
+#endif
+			result = guess;
+			max_uniques = uniques;
+			max_classes = classes;
+			max_correct = count[242];
+			keep = 1;
+			continue;
+		}
+
+#endif
+
+#if defined(ABSURDLE_MODE)
+
+		// Absurdle-mode aims to reduce the candidate set as fast as possible
+		// https://qntm.org/files/absurdle/absurdle.html
+
+		// First, pick the guess whose largest candidate set is smallest among all guesses
 
 		if(maximum > min_maximum) continue;
 		if(maximum < min_maximum)
 		{
-			cout << guess << " <---- Largest candidate set: " << maximum << endl;
-
+#if defined(VERBOSE)
+			cout << guess << " <---- Largest remaining candidate set: " << maximum << endl;
+#endif
 			result = guess;
 			min_maximum = maximum;
-			max_correct = count[242];
 			max_classes = classes;
-
-			if(max_correct) cout << guess << " <---- In candidate set." << endl;
-
+			max_correct = count[242];
 			keep = 1;
 			continue;
 		}
 
-		// Next, pick the guess that is a member of the candidate set
-
-		if(count[242] < max_correct) continue;
-		if(count[242] > max_correct)
-		{
-			cout << guess << " <---- In candidate set." << endl;
-
-			result = guess;
-			max_correct = count[242];
-			max_classes = classes;
-			keep = 1;
-			continue;
-		}
-
-		// Finally, pick the guess that produces greater multitude of candidate sets
+		// Next, pick the guess that produces greater multitude of candidate sets
 
 		if(classes < max_classes) continue;
 		if(classes > max_classes)
 		{
-			cout << guess << " <---- Number of candidate sets: " << classes << endl;
-			if(max_correct) cout << guess << " <---- In candidate set." << endl;
-
+#if defined(VERBOSE)
+			cout << guess << " <---- Number of remaining candidate sets: " << classes << endl;
+#endif
 			result = guess;
 			max_classes = classes;
+			max_correct = count[242];
+			keep = 1;
+			continue;
+		}
+
+#else
+
+		// Wordle mode aims to maximize the information content of the responses
+		// https://www.nytimes.com/games/wordle/index.html
+
+		// First, pick the guess that produces greatest multitude of candidate sets
+
+		if(classes < max_classes) continue;
+		if(classes > max_classes)
+		{
+#if defined(VERBOSE)
+			cout << guess << " <---- Number of remaining candidate sets: " << classes << endl;
+#endif
+			result = guess;
+			max_classes = classes;
+			min_maximum = maximum;
+			max_correct = count[242];
+			keep = 1;
+			continue;
+		}
+
+		// Next, pick the guess whose larger candidate set is smallest among all guesses
+
+		if(maximum > min_maximum) continue;
+		if(maximum < min_maximum)
+		{
+#if defined(VERBOSE)
+			cout << guess << " <---- Largest remaining candidate set: " << maximum << endl;
+#endif
+			result = guess;
+			min_maximum = maximum;
+			max_correct = count[242];
+			keep = 1;
+			continue;
+		}
+
+#endif
+
+		// Finally, pick the guess that is a member of the candidate set
+
+		if(count[242] < max_correct) continue;
+		if(count[242] > max_correct)
+		{
+#if defined(VERBOSE)
+			cout << guess << " <---- Member of the current candidate set." << endl;
+#endif
+			result = guess;
+			max_correct = count[242];
 			keep = 1;
 			continue;
 		}
 
 		// If still here, randomize...
 
-		if(++keep * rnd() < 1) result = guess;
+		if(++keep * rnd() < 1)
+		{
+#if defined(VERBOSE)
+			cout << guess << " <---- Randomized." << endl;
+#endif
+			result = guess;
+		}
 	}
+
+	cout << "=====" << endl << result << endl;
+	if(max_correct) cout << " * Member of the current candidate set." << endl;
+	cout << " * Number of remaining candidate sets: " << max_classes << endl;
+	cout << " * Largest remaining candidate set: " << min_maximum << endl;
+	cout << " * Win-or-bust candidates: " << max_uniques << endl;
+	cout << "=====" << endl;
 
 	return result;
 }
@@ -252,25 +341,13 @@ std::vector<Wordle> Load(char const *filename)
 
 //**********************************************************************************************************************
 
-void F()
-{
-	std::vector<Wordle> dictionary = Load("Dictionary.dat");
-
-	Wordle test("CLOOT");
-	Wordle goal("CHORD");
-
-	cout << goal.Score(test) << endl;
-}
-
-
 int main()
 {
-	// F(); return 0;
-
 	std::vector<Wordle> dictionary = Load("Dictionary.dat");
 	std::vector<Wordle> candidates = Load("Candidates.dat");
+	std::vector<Wordle> completion = dictionary;
 
-	cout << endl << "Playing: Enter the word in Wordle and type the response back as follows: 'B'=black, 'G'=green, 'Y'=yellow." << endl;
+	cout << endl << "How to play: Enter the word in Wordle and type the response back as follows: 'B'=black, 'G'=green, 'Y'=yellow." << endl;
 
 	Wordle guess;
 	int score;
@@ -280,11 +357,20 @@ int main()
 		guess = Contemplate(dictionary, candidates);
 		score = Evaluate(guess);
 		candidates = Eliminate(candidates, guess, score);
+		completion = Eliminate(completion, guess, score);
+
+		if(candidates.size() == 0 && completion.size() > 0)
+		{
+			cout << "Out of candidates, switching to completion." << endl;
+			candidates = completion;
+		}
 
 		cout << "Candidates left: " << candidates.size() << endl;
+#if defined(VERBOSE)
 		for(auto const &item : candidates)
 			cout << item << ", ";
 		cout << endl;
+#endif
 	}
 
 	if(candidates.size())
