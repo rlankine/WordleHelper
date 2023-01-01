@@ -7,7 +7,7 @@ using std::cout;
 using std::endl;
 
 // #define ABSURDLE_MODE
-#define VERBOSE
+// #define VERBOSE
 // #define WIN_OR_BUST
 
 //**********************************************************************************************************************
@@ -27,7 +27,7 @@ struct Wordle
 
 	int Score(char const *) const;
 
-	inline operator char const *() const { return hidden; }
+	operator char const *() const { return hidden; }
 
 private:
 	char hidden[6];
@@ -81,21 +81,17 @@ int Wordle::Score(char const *guess) const
 
 	return score[0] + 3 * (score[1] + 3 * (score[2] + 3 * (score[3] + 3 * score[4])));
 }
-Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> const &candidates)
+Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> const &candidates, int round)
 {
-	static int round = 0;
-
-	switch(++round)
+	switch(round)
 	{
 	case 1:
 #if defined(WIN_OR_BUST)
-		return "LATEN";
-#else
+#endif
 #if defined(ABSURDLE_MODE)
 		return "RAISE";
 #else
 		return "TRACE";
-#endif
 #endif
 	case 2:
 		break;
@@ -113,7 +109,6 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 	int min_maximum = INT_MAX;
 	int max_classes = 0;
 	int max_correct = 0;
-	int max_uniques = 0;
 	int keep = 0;
 
 	for(auto const &guess : dictionary)
@@ -134,23 +129,6 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 #if defined(WIN_OR_BUST)
 
 		// Impatient mode: Make as many options for the next guess as possible
-
-		int uniques = 0;
-		for(int i = 0; i < 243; ++i) if(count[i] == 1) ++uniques;
-
-		if(uniques < max_uniques) continue;
-		if(uniques > max_uniques)
-		{
-#if defined(VERBOSE)
-			cout << guess << " <---- Number of unique candidates: " << classes << endl;
-#endif
-			result = guess;
-			max_uniques = uniques;
-			max_classes = classes;
-			max_correct = count[242];
-			keep = 1;
-			continue;
-		}
 
 #endif
 
@@ -253,12 +231,13 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 		}
 	}
 
+	/*
 	cout << "=====" << endl << result << endl;
 	if(max_correct) cout << " * Member of the current candidate set." << endl;
 	cout << " * Number of remaining candidate sets: " << max_classes << endl;
 	cout << " * Largest remaining candidate set: " << min_maximum << endl;
-	cout << " * Win-or-bust candidates: " << max_uniques << endl;
 	cout << "=====" << endl;
+	*/
 
 	return result;
 }
@@ -341,6 +320,49 @@ std::vector<Wordle> Load(char const *filename)
 
 //**********************************************************************************************************************
 
+int CountMoves(std::vector<Wordle> const &dictionary, std::vector<Wordle> candidates, Wordle const &hidden)
+{
+	Wordle guess;
+	int round = 0;
+	int score;
+
+	while(candidates.size())
+	{
+		++round;
+		guess = Contemplate(dictionary, candidates, round);
+		cout << guess << ",";
+		score = hidden.Score(guess);
+		if(score == 242) break;
+		candidates = Eliminate(candidates, guess, score);
+	}
+
+	return round;
+}
+
+//**********************************************************************************************************************
+
+void Analyze(std::vector<Wordle> const &dictionary, std::vector<Wordle> const &candidates)
+{
+	int count = 0;
+	int moves;
+	int total = 0;
+
+	for(auto const &candidate : candidates)
+	{
+		cout << candidate << ":";
+		++count;
+		moves = CountMoves(dictionary, candidates, candidate);
+		total += moves;
+		cout << ":" << moves << endl;
+	}
+
+	cout << endl;
+	cout << "Count: " << count << endl;
+	cout << "Total: " << total << endl;
+}
+
+//**********************************************************************************************************************
+
 int main()
 {
 	std::vector<Wordle> dictionary = Load("Dictionary.dat");
@@ -349,13 +371,20 @@ int main()
 
 	cout << endl << "How to play: Enter the word in Wordle and type the response back as follows: 'B'=black, 'G'=green, 'Y'=yellow." << endl;
 
+	Analyze(dictionary, candidates); return 0;
+	// Analyze(candidates, candidates); return 0;
+	// CountMoves(dictionary, candidates, "INBOX"); return 0;
+
 	Wordle guess;
+	int round = 0;
 	int score;
 
-	while(candidates.size() > 1)
+	while(candidates.size())
 	{
-		guess = Contemplate(dictionary, candidates);
+		++round;
+		guess = Contemplate(dictionary, candidates, round);
 		score = Evaluate(guess);
+		if(score == 242) break;
 		candidates = Eliminate(candidates, guess, score);
 		completion = Eliminate(completion, guess, score);
 
@@ -375,7 +404,7 @@ int main()
 
 	if(candidates.size())
 	{
-		cout << "Answer: " << candidates[0] << endl;
+		cout << "Answer: " << guess << ", found in " << round << " rounds." << endl;
 	}
 	else
 	{
