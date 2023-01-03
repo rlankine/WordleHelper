@@ -142,6 +142,7 @@
     <ClCompile Include="WordleHelper.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Completion.dat" />
     <None Include="Dictionary.dat" />
   </ItemGroup>
   <ItemGroup>
