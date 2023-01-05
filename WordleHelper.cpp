@@ -7,9 +7,9 @@
 using std::cout;
 using std::endl;
 
-// Normal mode plays smart: Generate guesses where the number of partitioned candidate sets is as large as possible
+// Normal mode plays smart: Generates guesses where the number of candidate set partitions is as large as possible
 // https://www.nytimes.com/games/wordle/index.html
-// Absurdle-mode plays greedy: Generate guesses where the largest partitioned candidate set is as small as possible
+// Absurdle-mode plays greedy: Generates guesses where the largest candidate set partition is as small as possible
 // https://qntm.org/files/absurdle/absurdle.html
 
 // #define ABSURDLE_MODE
@@ -388,7 +388,9 @@ int main()
 
 		if(candidates.size() == 0 && completion.size() > 0)
 		{
+#if defined(VERBOSE)
 			cout << "Out of candidates, switching to completion." << endl;
+#endif
 			candidates = completion;
 		}
 
