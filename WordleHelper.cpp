@@ -371,7 +371,6 @@ int main()
 	// Analyze(dictionary, candidates); return 0;
 	// Analyze(candidates, candidates); return 0;
 	// Analyze(dictionary, dictionary); return 0;
-	// CountMoves(dictionary, candidates, "INBOX"); return 0;
 
 	Wordle guess;
 	int round = 0;
