@@ -13,7 +13,10 @@ using std::endl;
 // https://qntm.org/files/absurdle/absurdle.html
 
 // #define ABSURDLE_MODE
+// #define ANALYSIS
+#if !defined(ANALYSIS)
 #define VERBOSE
+#endif
 
 //**********************************************************************************************************************
 
@@ -349,6 +352,7 @@ void Analyze(std::vector<Wordle> const &dictionary, std::vector<Wordle> const &c
 	cout << endl;
 	cout << "Count: " << count << endl;
 	cout << "Total: " << total << endl;
+	cout << "Ratio: " << double(total) / count << endl;
 }
 
 //**********************************************************************************************************************
@@ -368,9 +372,11 @@ int main()
 
 	cout << endl << "How to play: Enter the word in Wordle and type the response back as follows: 'B'=black, 'G'=green, 'Y'=yellow." << endl;
 
-	// Analyze(dictionary, candidates); return 0;
+#if defined(ANALYSIS)
+	Analyze(dictionary, candidates); return 0;
 	// Analyze(candidates, candidates); return 0;
 	// Analyze(dictionary, dictionary); return 0;
+#endif
 
 	Wordle guess;
 	int round = 0;
