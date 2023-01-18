@@ -176,7 +176,7 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 			continue;
 		}
 
-		// Next, pick the guess whose larger candidate set is smallest among all guesses
+		// Next, pick the guess whose largest candidate set is smallest among all guesses
 
 		if(maximum > min_maximum) continue;
 		if(maximum < min_maximum)
