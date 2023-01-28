@@ -1,4 +1,5 @@
 
+
 #include <assert.h>
 #include <fstream>
 #include <iostream>
@@ -7,6 +8,17 @@
 using std::cout;
 using std::endl;
 
+/*
+CARLE, keep first	5733
+CARLE, keep last	5735
+PARSE, keep first	5785
+PARSE, keep last	5785
+RAISE, keep first	5798
+RAISE, keep last	5799
+SLATE, keep first	5716
+SLATE, keep last	5715
+*/
+
 // Normal mode plays smart: Generates guesses where the number of candidate set partitions is as large as possible
 // https://www.nytimes.com/games/wordle/index.html
 // Absurdle-mode plays greedy: Generates guesses where the largest candidate set partition is as small as possible
@@ -14,6 +26,10 @@ using std::endl;
 
 // #define ABSURDLE_MODE
 // #define ANALYSIS
+// #define FIRST_GUESS "CARLE"
+// #define FIRST_GUESS "PARSE"
+// #define FIRST_GUESS "RAISE"  // Absurdle-mode seems to be wanting this
+// #define FIRST_GUESS "SLATE"
 #if !defined(ANALYSIS)
 #define VERBOSE
 #endif
@@ -96,6 +112,10 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 	// For one or two candidates either there is no choice or the order of choices does not matter
 	// For three candidates a choice is possible that is either correct or eliminates one of the other two
 	if(candidates.size() < 3) return candidates[0];
+
+#if defined(FIRST_GUESS)
+	if (round == 1) return FIRST_GUESS;
+#endif
 
 	switch(round)
 	{
@@ -204,9 +224,7 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 		// If still here, randomize...
 
 		if(++keep * rnd() < 1)
-		{
-			result = guess;
-		}
+		result = guess;
 	}
 
 #if defined(VERBOSE)
