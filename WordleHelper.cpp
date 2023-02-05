@@ -1,5 +1,4 @@
 
-
 #include <assert.h>
 #include <fstream>
 #include <iostream>
@@ -9,14 +8,16 @@ using std::cout;
 using std::endl;
 
 /*
-CARLE, keep first	5733
-CARLE, keep last	5735
-PARSE, keep first	5785
-PARSE, keep last	5785
-RAISE, keep first	5798
-RAISE, keep last	5799
-SLATE, keep first	5716
-SLATE, keep last	5715
+CARLE: Number of remaining candidate sets: 140, Largest remaining candidate set: 200.  5706.0
+REAST: Number of remaining candidate sets: 139, Largest remaining candidate set: 171.  5688.0
+SLATE: Number of remaining candidate sets: 136, Largest remaining candidate set: 163.  5686.5
+
+SLATE	5686	5687	1.
+REAST	5688	5688	2.
+TRACE	5694	5694	3.
+CARLE	5707	5705	4.
+TARES	5740	5741	5.
+RAISE	5769	5768	6.
 */
 
 // Normal mode plays smart: Generates guesses where the number of candidate set partitions is as large as possible
@@ -26,10 +27,13 @@ SLATE, keep last	5715
 
 // #define ABSURDLE_MODE
 // #define ANALYSIS
-// #define FIRST_GUESS "CARLE"
-// #define FIRST_GUESS "PARSE"
-// #define FIRST_GUESS "RAISE"  // Absurdle-mode seems to be wanting this
-// #define FIRST_GUESS "SLATE"
+// #define FIRST_GUESS "CARLE"  // HOIST: Number of remaining candidate sets: 73, Largest remaining candidate set: 15, Member of the current candidate set.
+// #define FIRST_GUESS "REAST"  // LOUND: Number of remaining candidate sets: 63, Largest remaining candidate set: 14.
+// #define FIRST_GUESS "SLATE"  // CORNU: Number of remaining candidate sets: 64, Largest remaining candidate set: 12.
+// #define FIRST_GUESS "RAISE"  // Absurdle-mode
+// #define FIRST_GUESS "TRACE"  // dictionary = candidates
+// #define FIRST_GUESS "TARES"  // candidates = dictionary
+#define HEURISTIC_LEVEL 1
 #if !defined(ANALYSIS)
 #define VERBOSE
 #endif
@@ -137,6 +141,7 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 	int min_maximum = INT_MAX;
 	int max_classes = 0;
 	int max_correct = 0;
+	double max_heuristic = 0.0;
 	int keep = 0;
 
 	for(auto const &guess : dictionary)
@@ -154,6 +159,40 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 				maximum = count[score];
 		}
 
+		double heuristic = classes / log(maximum);
+		// double heuristic = classes - 7 * log(maximum);
+
+		if (false)
+		{
+			cout << guess << ": ";
+			cout << "Number of remaining candidate sets: " << classes;
+			cout << ", Largest remaining candidate set: " << maximum;
+			cout << " (" << heuristic << ")";
+			if (count[242]) cout << ", Member of the current candidate set. <<<<" << endl; else cout << ". (not picked)" << endl;
+		}
+
+		if (round <= HEURISTIC_LEVEL)
+		{
+			if (heuristic < max_heuristic) continue;
+			if (heuristic > max_heuristic)
+			{
+				result = guess;
+				max_classes = classes;
+				min_maximum = maximum;
+				max_correct = count[242];
+				max_heuristic = heuristic;
+				keep = 1;
+#if defined(VERBOSE)
+				cout << result << ": ";
+				cout << "Number of remaining candidate sets: " << classes;
+				cout << ", Largest remaining candidate set: " << maximum;
+				cout << " (heuristic = " << heuristic << ")";
+				if (max_correct) cout << ", Member of the current candidate set." << endl; else cout << "." << endl;
+#endif
+				continue;
+			}
+		}
+
 #if defined(ABSURDLE_MODE)
 
 		// First, pick the guess whose largest candidate set is smallest among all guesses
@@ -166,6 +205,13 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 			max_classes = classes;
 			max_correct = count[242];
 			keep = 1;
+#if defined(VERBOSE)
+			cout << result << ": ";
+			cout << "Number of remaining candidate sets: " << max_classes;
+			cout << ", Largest remaining candidate set: " << min_maximum;
+			// cout << " (" << double(classes) / double(maximum) << ")";
+			if (max_correct) cout << ", Member of the current candidate set." << endl; else cout << "." << endl;
+#endif
 			continue;
 		}
 
@@ -178,6 +224,13 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 			max_classes = classes;
 			max_correct = count[242];
 			keep = 1;
+#if defined(VERBOSE)
+			cout << result << ": ";
+			cout << "Number of remaining candidate sets: " << max_classes;
+			cout << ", Largest remaining candidate set: " << min_maximum;
+			// cout << " (" << double(classes) / double(maximum) << ")";
+			if (max_correct) cout << ", Member of the current candidate set." << endl; else cout << "." << endl;
+#endif
 			continue;
 		}
 
@@ -193,6 +246,13 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 			min_maximum = maximum;
 			max_correct = count[242];
 			keep = 1;
+#if defined(VERBOSE)
+			cout << result << ": ";
+			cout << "Number of remaining candidate sets: " << max_classes;
+			cout << ", Largest remaining candidate set: " << min_maximum;
+			// cout << " (" << double(classes) / double(maximum) << ")";
+			if (max_correct) cout << ", Member of the current candidate set." << endl; else cout << "." << endl;
+#endif
 			continue;
 		}
 
@@ -205,6 +265,13 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 			min_maximum = maximum;
 			max_correct = count[242];
 			keep = 1;
+#if defined(VERBOSE)
+			cout << result << ": ";
+			cout << "Number of remaining candidate sets: " << max_classes;
+			cout << ", Largest remaining candidate set: " << min_maximum;
+			// cout << " (" << double(classes) / double(maximum) << ")";
+			if (max_correct) cout << ", Member of the current candidate set." << endl; else cout << "." << endl;
+#endif
 			continue;
 		}
 
@@ -216,6 +283,13 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 			result = guess;
 			max_correct = count[242];
 			keep = 1;
+#if defined(VERBOSE)
+			cout << result << ": ";
+			cout << "Number of remaining candidate sets: " << max_classes;
+			cout << ", Largest remaining candidate set: " << min_maximum;
+			// cout << " (" << double(classes) / double(maximum) << ")";
+			if (max_correct) cout << ", Member of the current candidate set." << endl; else cout << "." << endl;
+#endif
 			continue;
 		}
 
@@ -223,17 +297,18 @@ Wordle Contemplate(std::vector<Wordle> const &dictionary, std::vector<Wordle> co
 
 		// If still here, randomize...
 
-		if(++keep * rnd() < 1)
-		result = guess;
-	}
-
+		if (false)  // was: if (++keep * rnd() < 1)
+		{
+			result = guess;
 #if defined(VERBOSE)
-	cout << "=====" << endl << result << endl;
-	if(max_correct) cout << " * Member of the current candidate set." << endl;
-	cout << " * Number of remaining candidate sets: " << max_classes << endl;
-	cout << " * Largest remaining candidate set: " << min_maximum << endl;
-	cout << "=====" << endl;
+			cout << result << ": ";
+			cout << "Number of remaining candidate sets: " << max_classes;
+			cout << ", Largest remaining candidate set: " << min_maximum;
+			// cout << " (" << double(classes) / double(maximum) << ")";
+			if (max_correct) cout << ", Member of the current candidate set." << endl; else cout << "." << endl;
 #endif
+		}
+	}
 
 	return result;
 }
@@ -368,8 +443,8 @@ void Analyze(std::vector<Wordle> const &dictionary, std::vector<Wordle> const &c
 	}
 
 	cout << endl;
-	cout << "Count: " << count << endl;
 	cout << "Total: " << total << endl;
+	cout << "Words: " << count << endl;
 	cout << "Ratio: " << double(total) / count << endl;
 }
 
@@ -384,7 +459,7 @@ int main()
 	// See https://wordfinder.yourdictionary.com/wordle/answers/ for more completion
 
 #if !defined(ABSURDLE_MODE)
-    candidates = Trim(candidates, completion);
+	candidates = Trim(candidates, completion);
 	completion = dictionary;
 #endif
 
