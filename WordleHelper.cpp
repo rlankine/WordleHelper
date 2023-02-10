@@ -33,7 +33,7 @@ RAISE	5769	5768	6.
 // #define FIRST_GUESS "RAISE"  // Absurdle-mode
 // #define FIRST_GUESS "TRACE"  // dictionary = candidates
 // #define FIRST_GUESS "TARES"  // candidates = dictionary
-#define HEURISTIC_LEVEL 1
+#define HEURISTIC_LEVEL 0
 #if !defined(ANALYSIS)
 #define VERBOSE
 #endif
