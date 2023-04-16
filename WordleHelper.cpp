@@ -7,19 +7,6 @@
 using std::cout;
 using std::endl;
 
-/*
-CARLE: Number of remaining candidate sets: 140, Largest remaining candidate set: 200.  5706.0
-REAST: Number of remaining candidate sets: 139, Largest remaining candidate set: 171.  5688.0
-SLATE: Number of remaining candidate sets: 136, Largest remaining candidate set: 163.  5686.5
-
-SLATE	5686	5687	1.
-REAST	5688	5688	2.
-TRACE	5694	5694	3.
-CARLE	5707	5705	4.
-TARES	5740	5741	5.
-RAISE	5769	5768	6.
-*/
-
 // Normal mode plays smart: Generates guesses where the number of candidate set partitions is as large as possible
 // https://www.nytimes.com/games/wordle/index.html
 // Absurdle-mode plays greedy: Generates guesses where the largest candidate set partition is as small as possible
@@ -33,6 +20,9 @@ RAISE	5769	5768	6.
 // #define FIRST_GUESS "RAISE"  // Absurdle-mode
 // #define FIRST_GUESS "TRACE"  // dictionary = candidates
 // #define FIRST_GUESS "TARES"  // candidates = dictionary
+// #define FIRST_GUESS "SOARE"  // Wordle Analyzer plays always this
+// #define FIRST_GUESS "ROWND"  // Targets the "difficult" words first
+// #define HARD_MODE
 #define HEURISTIC_LEVEL 0
 #if !defined(ANALYSIS)
 #define VERBOSE
@@ -406,7 +396,7 @@ next:   ;
 
 //**********************************************************************************************************************
 
-int CountMoves(std::vector<Wordle> const &dictionary, std::vector<Wordle> candidates, Wordle const &hidden)
+int CountMoves(std::vector<Wordle> dictionary, std::vector<Wordle> candidates, Wordle const &hidden)
 {
 	Wordle guess;
 	int round = 0;
@@ -420,6 +410,9 @@ int CountMoves(std::vector<Wordle> const &dictionary, std::vector<Wordle> candid
 		score = hidden.Score(guess);
 		if(score == 242) break;
 		candidates = Eliminate(candidates, guess, score);
+#if defined(HARD_MODE)
+		dictionary = Eliminate(dictionary, guess, score);
+#endif
 	}
 
 	return round;
@@ -458,6 +451,9 @@ int main()
 
 	// See https://wordfinder.yourdictionary.com/wordle/answers/ for more completion
 
+#if defined(HARD_MODE)
+	dictionary = candidates;
+#endif
 #if !defined(ABSURDLE_MODE)
 	candidates = Trim(candidates, completion);
 	completion = dictionary;
@@ -483,7 +479,9 @@ int main()
 		if(score == 242) break;
 		candidates = Eliminate(candidates, guess, score);
 		completion = Eliminate(completion, guess, score);
-
+#if defined(HARD_MODE)
+		dictionary = Eliminate(dictionary, guess, score);
+#endif
 		if(candidates.size() == 0 && completion.size() > 0)
 		{
 #if defined(VERBOSE)
