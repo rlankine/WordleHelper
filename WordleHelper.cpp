@@ -11,6 +11,8 @@ using std::endl;
 // https://www.nytimes.com/games/wordle/index.html
 // Absurdle-mode plays greedy: Generates guesses where the largest candidate set partition is as small as possible
 // https://qntm.org/files/absurdle/absurdle.html
+// List of words that have been alrwady used
+// https://wordfinder.yourdictionary.com/wordle/answers/
 
 // #define ABSURDLE_MODE
 // #define ANALYSIS
