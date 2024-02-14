@@ -24,6 +24,9 @@ using std::endl;
 // #define FIRST_GUESS "TARES"  // candidates = dictionary
 // #define FIRST_GUESS "SOARE"  // Wordle Analyzer plays always this
 // #define FIRST_GUESS "ROWND"  // Targets the "difficult" words first
+// #define FIRST_GUESS "PARSE"
+// #define FIRST_GUESS "AESIR"
+// #define FIRST_GUESS "ALIEN"
 // #define HARD_MODE
 #define HEURISTIC_LEVEL 0
 #if !defined(ANALYSIS)
